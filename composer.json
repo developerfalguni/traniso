@@ -1,0 +1,11 @@
+{
+    "config": {
+        "platform-check": false
+    },
+    "require": {
+	    "tecnickcom/tcpdf": "^6.2.13",
+        "guzzlehttp/guzzle": "^7.4",
+        "wangoviridans/ganon": "dev-master",
+        "tinymce/tinymce": "^6.0"
+	}
+}

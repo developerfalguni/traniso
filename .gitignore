@@ -1,0 +1,8 @@
+# composer vendor dir
+
+# composer itself is not needed
+composer.phar
+
+# composer lock
+composer.lock
+

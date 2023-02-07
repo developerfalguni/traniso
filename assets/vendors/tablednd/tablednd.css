@@ -1,0 +1,7 @@
+.showDragHandle {
+	cursor: grab !important;
+}
+
+.tDnD_whileDrag td {
+	background-color: #eee;
+}
