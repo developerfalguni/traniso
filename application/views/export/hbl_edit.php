@@ -202,7 +202,29 @@ echo form_hidden(array('job_id' => 0));
 						</tr>
 					</tbody>
 				</table>
+				
 			</div>
+			<div class="col-md-12">
+				<table class="table" id="TemplateRow_cn">
+					<thead>
+						<tr>
+							<th class="p-1 text-left align-top">CONTAINER NO.</th>
+							<th width="15%" class="p-1 text-left align-top">LINE SEAL NO.</th>
+							<th class="p-1 text-left align-top">SHIPPER SEAL</th>
+							<th class="p-1 text-left align-top">PACKAGE</th>
+							<th class="p-1 text-left align-top">TYPE</th>
+							<th class="p-1 text-left align-top">NET WEIGHT</th>
+							<th class="p-1 text-left align-top">Gross Weight</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr class="TemplateRow_cn" id="PartyContact_cn">
+							
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<!-- End Falguni -->
 			<div class="col-md-12">
 				<!-- <table class="table min-vh-100" > -->
 				<table class="table table-borderless" >
@@ -264,7 +286,26 @@ echo form_hidden(array('job_id' => 0));
 </div>
 
 <script type="text/javascript">
-	
+	$('#Print').on('click', function(e) {
+		e.preventDefault();	
+		var id = $("input[name=job_id]").val();
+		
+		if(id > 0){
+			let a= document.createElement('a');
+			a.target= '_blank';
+			a.href= "<?php echo base_url($this->_clspath.$this->_class.'/pdf/1/'); ?>"+id;
+			a.click();
+		}
+		else
+		{
+			Swal.fire({
+		        html:  "Please select any Invoice for print...!",
+		        icon: "error",
+		    });
+		}
+	});
+
+
 	$(document).ready(function() {
 
 		$('#exportSelect2').select2({
@@ -378,15 +419,54 @@ echo form_hidden(array('job_id' => 0));
 									containers += '</tr>';
 								}
 							}
+
+						var containers_cn = '';
+		     				if(response.containers_cn.length){
+						    	var mresult = JSON.parse(JSON.stringify(response.containers_cn));
+
+						    	for (var j = 0; j < mresult.length; j++) {
+						    		
+						    		containers_cn += '<tr>';
+										containers_cn += '<td class="p-1 text-left align-top">';
+											containers_cn += '<input type="text" class="form-control form-control-sm" name="container_number['+mresult[j].id+']" value="'+mresult[j].number+'" placeholder="Containers">';
+										containers_cn += '</td>';
+											containers_cn += '<td class="p-1 text-left align-top">';
+											containers_cn += '<input type="text" class="form-control form-control-sm" name="line_seal_number['+mresult[j].id+']" value="'+mresult[j].line_seal+'" placeholder="Line Seal Number">';
+										containers_cn += '</td>';
+										containers_cn += '<td class="p-1 text-left align-top">';
+											containers_cn += '<input type="text" class="form-control form-control-sm" name="shipper_seal['+mresult[j].id+']" value="'+mresult[j].shipper_seal+'" placeholder="Shipper Seal">';
+										containers_cn += '</td>';
+										containers_cn += '<td class="p-1 text-left align-top">';
+											containers_cn += '<input type="text" class="form-control form-control-sm" name="no_of_packages['+mresult[j].id+']" value="'+mresult[j].cntr_packages+'" placeholder="No of packages">';
+										containers_cn += '</td>';
+										containers_cn += '<td class="p-1 text-left align-top">';
+											containers_cn += '<input type="text" class="form-control form-control-sm" name="container_type['+mresult[j].id+']" value="'+mresult[j].container_type+'" placeholder="Type">';
+										containers_cn += '</td>';
+										containers_cn += '<td class="p-1 text-left align-top">';
+											containers_cn += '<input type="text" class="form-control form-control-sm" name="net_weights['+mresult[j].id+']" value="'+mresult[j].cntr_net_weight+'" placeholder="Type">';
+										containers_cn += '</td>';
+										containers_cn += '<td class="p-1 text-left align-top">';
+											containers_cn += '<input type="text" class="form-control form-control-sm" name="gross_measure['+mresult[j].id+']" value="'+mresult[j].cntr_gross_weight+'" placeholder="Gross Weight">';
+										containers_cn += '</td>';
+									containers_cn += '</tr>';
+								}
+							}
 						// $('#TemplateRow tbody tr').remove();	
 						
 						if(response.containers.length !== 0){
-							$('#TemplateRow tbody').append(containers);
-								
+							$('#TemplateRow tbody').append(containers);							
 						}
 						else{
 							
 							$('#TemplateRow tbody').html('<tr><td colspan="4" class="text-center">No Container details Found...</td></tr>').css('color', 'red').css('font-weight','Bold');
+						}
+
+						if(response.containers_cn.length !== 0){
+							$('#TemplateRow_cn tbody').append(containers_cn);							
+						}
+						else{
+							
+							$('#TemplateRow_cn tbody').html('<tr><td colspan="4" class="text-center">No Container details Found...</td></tr>').css('color', 'red').css('font-weight','Bold');
 						}
 						$("#Maincard").removeClass("d-none");
 

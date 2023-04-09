@@ -65,6 +65,7 @@ class Jobs extends MY_Controller {
 	}
 
 	function edit() {
+
 		$data['company_id'] = $this->_company_id;
 		$data['sub_type'] = getEnumSetOptions($this->_table, 'sub_type');
 
@@ -421,7 +422,7 @@ class Jobs extends MY_Controller {
 			echo "Access Denied";
 	}
 
-	function jobsList() {
+	function jobsList() { 
 		$json = [];
 		if ($this->input->is_ajax_request()) {
 

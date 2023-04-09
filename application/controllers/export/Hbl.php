@@ -1,5 +1,5 @@
 <?php
-
+use mikehaertl\wkhtmlto\Pdf;
 class Hbl extends MY_Controller {
 	function __construct() {
 		parent::__construct();
@@ -26,7 +26,7 @@ class Hbl extends MY_Controller {
 
 		$response = [];
 		
-		if($job_id){
+		if($job_id){ 
 
 			$jobs = $this->kaabar->getRow('jobs',['id' => $job_id]);
 			$hblData = $this->kaabar->getRow('hbl_jobs',['job_id' => $job_id]);
@@ -114,10 +114,13 @@ class Hbl extends MY_Controller {
 				$containers = $this->kaabar->getRows('containers', $job_id, 'job_id');
 
 				foreach ($containers as $key => $value) {
+
 					$containers[$key]['description'] = $jobs['remarks'];
 				}
 
 				$jobs['no_containers'] = count($containers);
+
+
 				
 			}
 
@@ -125,6 +128,7 @@ class Hbl extends MY_Controller {
 			$response['job'] = $jobs;
 			// $container_count = count($containers);
 			$response['containers'] = $containers;
+			$response['containers_cn'] = $containers;
 			//$response['containers'] = $containers;
 
 		}
@@ -134,6 +138,7 @@ class Hbl extends MY_Controller {
 			$response['success'] = false;
 			$response['messages'] = 'Job No Required';
 		}
+
 		header('Content-type: application/json; charset=utf-8');
 		echo json_encode($response, JSON_UNESCAPED_UNICODE);
 	}
@@ -255,6 +260,318 @@ class Hbl extends MY_Controller {
 		}
 		else
 			echo "Access Denied";
+   }
+
+   //pdf Falguni
+   function pdf($id = 0, $pdf = 0) {
+   		$job_id=$this->uri->segment('5');
+   		$response = [];
+   		if($job_id){ 
+
+			$jobs = $this->kaabar->getRow('jobs',['id' => $job_id]);
+			$hblData = $this->kaabar->getRow('hbl_jobs',['job_id' => $job_id]);
+			
+			if($hblData){
+
+				$jobs = $hblData;
+				$job['job_id'] = $job_id;
+				$containers = $this->kaabar->getRows('hbl_details', $jobs['id'], 'parent_id');
+			}
+			else
+			{
+
+				$job = $this->export->getJob($job_id);
+
+				$job['job_id'] = $job_id;
+				///////// Find Billing 1 Name using Category
+				if($job['billing_party_category'] == 'PARTY')
+					$party = $this->kaabar->getRow('parties', $job['billing_party_id'], 'id');
+				elseif($job['billing_party_category'] == 'AGENT')
+					$party = $this->kaabar->getRow('new_agents', $job['billing_party_id'], 'id');
+
+				///////// Find Shipper Name using Category
+				
+				
+				if($job['shipper_category'] == 'PARTY'){
+					$shipper = $this->kaabar->getRow('parties', $job['shipper_id'], 'id');
+				}
+				elseif($job['shipper_category'] == 'AGENT'){
+					$shipper = $this->kaabar->getRow('new_agents', $job['shipper_id'], 'id');
+
+					$shipper['name']=$shipper['person_name'];
+					$shipper['address']=$shipper['address1'];
+					
+				}
+				elseif($job['shipper_category'] == 'CONSIGNEE')
+					$shipper = $this->kaabar->getRow('consignees', $job['shipper_id'], 'id');
+				elseif($job['shipper_category'] == 'VENDOR')
+					$shipper = $this->kaabar->getRow('vendors', $job['shipper_id'], 'id');
+				
+				///////// Find Billing 2 Name using Category
+				if($job['billing_party1_category'] == 'PARTY')
+					$party2 = $this->kaabar->getRow('parties', $job['billing_party1_id'], 'id');
+				elseif($job['billing_party1_category'] == 'AGENT')
+					$party2 = $this->kaabar->getRow('new_agents', $job['billing_party1_id'], 'id');
+				elseif($job['billing_party1_category'] == 'CONSIGNEE')
+					$party2 = $this->kaabar->getRow('consignees', $job['billing_party1_id'], 'id');
+				elseif($job['billing_party1_category'] == 'VENDOR')
+					$party2 = $this->kaabar->getRow('vendors', $job['billing_party1_id'], 'id');
+
+
+				$consignee = $this->kaabar->getRow('consignees',['id' => $job['consignee_id']]);
+				$notify = $this->kaabar->getRow('consignees',['id' => $job['notify_id']]);
+				$receipt_port  = $this->kaabar->getField('ports', ['id' => $job['por_id']]);
+				$loading_port  = $this->kaabar->getField('ports', ['id' => $job['pol_id']]);
+				$discharge  = $this->kaabar->getField('ports', ['id' => $job['pod_id']]);
+				$delivery  = $this->kaabar->getField('ports', ['id' => $job['fpod_id']]);
+
+				$shipper_state =isset($shipper['state']) ? $shipper['state'] : '';
+
+				$sql_state="SELECT * FROM `states` where `id`=$shipper_state";
+				
+				$query_state = $this->db->query($sql_state);
+
+			    $re_state=$query_state->row();
+
+
+			    $shipper_country =isset($shipper['country']) ? $shipper['country'] : '';
+
+				$sql_country="SELECT * FROM `countries` where `id`=$shipper_country";
+				
+				$query_country = $this->db->query($sql_country);
+
+			    $re_country=$query_country->row();
+
+				
+				$jobs['id'] 			= 0;
+				$jobs['job_id'] 		= $job['id'];
+				$jobs['item_description'] 		= isset($job['item_description']) ? $job['item_description'] : '';
+				$jobs['sb_no'] 		= $job['sb_no'];
+				$jobs['job_invoice_no'] 		= isset($job['invoice_no']) ? $job['invoice_no'] : '';
+				$jobs['job_net_weight'] 		= isset($job['net_weight']) ? $job['net_weight'] : '';
+				$jobs['job_gross_weight'] 		= isset($job['gross_weight']) ? $job['gross_weight'] : '';
+				$jobs['job_gross_weight'] 		= isset($job['gross_weight']) ? $job['gross_weight'] : '';
+				$jobs['booking_date'] 		= isset($job['booking_date']) ? $job['booking_date'] : '';
+				$jobs['package_type_name'] 		= isset($job['package_type_name']) ? $job['package_type_name'] : '';
+				$jobs['unit_name'] 		= isset($job['unit_name']) ? $job['unit_name'] : '';
+
+				$jobs['s_name'] 		= isset($shipper['name']) ? $shipper['name'] : '';
+				$jobs['s_address'] 		= isset($shipper['address']) ? $shipper['address'] : '';
+				$jobs['city_id'] 		= isset($shipper['city_id']) ? $shipper['city_id'] : '';
+				$jobs['state'] 		= isset($re_state->name) ? $re_state : '';
+				$jobs['country'] 		= isset($re_country->name) ? $re_country : '';
+				$jobs['pincode'] 		= $shipper['pincode'];
+				$jobs['email'] 		= isset($shipper['email']) ? $shipper['email'] : '' ;
+				$jobs['gst_nos'] 		= $shipper['gst_nos'];
+
+				
+				$jobs['c_name'] 		= isset($consignee['consignee_name']) ? $consignee['consignee_name'] : '';
+				$jobs['c_address1'] 		= isset($consignee['address1']) ? $consignee['address1'] : '';
+				$jobs['c_address2'] 		= isset($consignee['address2']) ? $consignee['address2'] : '';
+				$jobs['c_address3'] 		= isset($consignee['address3']) ? $consignee['address3'] : '';
+				$jobs['city'] 		= isset($consignee['city']) ? $consignee['city'] : '';
+				$jobs['website'] 		= isset($consignee['website']) ? $consignee['website'] : '';
+				$jobs['mobile_no'] 		= isset($consignee['mobile_no']) ? $consignee['mobile_no'] : '';
+				$jobs['email_id'] 		= isset($consignee['email_id']) ? $consignee['email_id'] : '';
+
+				
+				$jobs['n_name'] 		= isset($notify['name']) ? $notify['name'] : '';
+				$jobs['n_address'] 		= isset($notify['address1']) ? $notify['address1'] : '';
+				$jobs['n_address1'] 		= isset($notify['address1']) ? $notify['address1'] : '';
+				$jobs['n_address2'] 		= isset($notify['address2']) ? $notify['address2'] : '';
+				$jobs['n_address3'] 		= isset($notify['address3']) ? $notify['address3'] : '';
+				$jobs['n_city'] 		= isset($notify['city']) ? $notify['city'] : '';
+				$jobs['n_website'] 		= isset($notify['website']) ? $notify['website'] : '';
+				$jobs['n_mobile_no'] 		= isset($notify['mobile_no']) ? $notify['mobile_no'] : '';
+				$jobs['n_email_id'] 		= isset($notify['email_id']) ? $notify['email_id'] : '';
+
+				$jobs['bl_no'] 			= $job['hbl_no'];
+				$jobs['bl_type'] 		= $job['hbl_type'];
+				$jobs['vessel'] 		= isset($job['vessel_name']) ? $job['vessel_name'] : '';
+				$jobs['voyage'] 		= isset($job['vessel_voyage']) ? $job['vessel_voyage'] : '';
+				$jobs['booking_no'] 	= $job['booking_no'];
+				$jobs['delivery_agent'] = '';
+				$jobs['receipt'] 		= $receipt_port ? $receipt_port : '';
+				$jobs['loading'] 		= $loading_port ? $loading_port : '';
+				$jobs['discharge'] 		= $discharge ? $discharge : '';
+				$jobs['delivery'] 		= $delivery ? $delivery : '';
+				$jobs['gross_weight'] 	= $job['gross_weight'];
+				$jobs['charges_amount'] = '';
+				$jobs['payable_at'] 	= '';
+				$jobs['no_of_original'] = '';
+				$jobs['date_issue'] 	= '';
+				$jobs['remarks'] 		= $job['remarks'];
+
+				$containers = $this->kaabar->getRows('containers', $job_id, 'job_id');
+
+				foreach ($containers as $key => $value) {
+
+					$containers[$key]['description'] = $jobs['remarks'];
+				}
+
+				$jobs['no_containers'] = count($containers);
+				
+			}
+			$response['job'] = $jobs;
+			// $container_count = count($containers);
+			$response['containers'] = $containers;
+			$response['containers_cn'] = $containers;
+
+		
+		/*echo $response['job']['s_name'];
+   		echo $job_id;exit();
+*/
+   		}
+
+   		$filename = "hbl_report";
+   		   		
+   		if($pdf > 0)
+        {
+        	
+        
+        $calibri = TCPDF_FONTS::addTTFfont(FCPATH.'vendor/tecnickcom/tcpdf/fonts/calibri.ttf', 'TrueTypeUnicode', '', 32);
+        $calibribold = TCPDF_FONTS::addTTFfont(FCPATH.'vendor/tecnickcom/tcpdf/fonts/calibri-bold.ttf', 'TrueTypeUnicode', '', 32);
+		
+
+        	$pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, 'A4', true, 'UTF-8', false);
+		
+			//$fontname = TCPDF_FONTS::addTTFfont('times.php', '', '', 96);
+			
+			//$pdf->setFontSubsetting(false);
+			$pdf->SetFont('times', 'BI', 20);
+			//$this->setFont($this->FontFamily, $this->FontStyle, $this->FontSizePt);
+			$pdf->SetCreator(PDF_CREATOR);
+			$pdf->SetAuthor(Auth::get('username'));
+			$pdf->SetTitle($filename);
+			$pdf->SetPrintHeader(false);
+			$pdf->SetPrintFooter(false);
+			$pdf->SetMargins(5, 10, 10, true);
+			$pdf->SetAutoPageBreak(TRUE, 10);
+
+			$pdf->AddPage();
+			$pdf->SetFont($calibribold, '', 12);
+			/*$pdf->SetTextColor(0,112,192);*/
+			$html = '<html>
+			<head></head>
+			<body><table border="1">
+ <tr>
+  <th colspan="4" align="center" style="font-family:calibri;font-size:8;line-height: 220%;">BILL OF LADING FOR OCEAN TRANSPORT OR MULTIMODAL TRANSPORT</th>
+ </tr>
+ <tr>
+  <td colspan="2" rowspan="3"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">SHIPPER</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['s_name'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['s_address'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.isset($response['job']['state']).' '.isset($response['job']['pincode']).' '.isset($response['job']['country']).'</span><br/><span style="font-family:calibri;font-size:10;"> TEL : 9727777791 MAIL : '.isset($response['job']['email']).'</span><br/><span style="font-family:calibri;font-size:10;"> GST NO : '.isset($response['job']['gst_nos']).'</span>
+	  <hr style="border: 1px solid black;line-height: 20px;"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">CONSIGNEE</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['c_name'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.isset($response['job']['c_address1']).' '.isset($response['job']['c_address2']).'</span><br/><span style="font-family:calibri;font-size:10;"> Croatia VAT: 65657961246</span><br/> <span style="font-family:calibri;font-size:10;"> '.isset($response['job']['c_address2']).' '.isset($response['job']['city']).'</span>	
+</td>
+<td align="center">
+<span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:11;line-height: 250%;">BL NO \ MTD NO</span></td>
+  <td><span style="font-family:calibri-bold;font-size:10;line-height: 250%;"> '.$response['job']['bl_no'].'</span></td>
+ </tr>
+ <tr>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:11;line-height:150%">BL TYPE </span></td>
+  <td><span style="font-family:calibri-bold;font-size:10;line-height:150%"> '.$response['job']['bl_type'].'</span></td>
+  
+ </tr>
+ <tr>
+  <td colspan="2" align="center"><img src="/traniso/php_uploads/bd0f7b72c8788826c4c1b136c99f57fd.png" width="100" height="60"><br/><span style="font-family:calibri;font-size:8;">REG OFF. : GF2, Ground Floor, Riddhi Siddhi Arcade 1, Plot No 13,<br style="line-height:12px;">Sector 8, Nr B.M Pump, Gandhidham - Gujarat (370201) - <b>INDIA</b><br style="line-height:12px;"><a href="www.traniso.in" style="color:black;text-decoration:none">www.traniso.in</a> | +91 9727 626474 | <a href="mailto:manish@traniso.in" style="color:black;text-decoration:none">manish@traniso.in</a><br style="line-height:12px;"><b>REG NO : MTO/DGS/2553/JAN/2025</b></span></td>  
+ </tr>
+ <tr>
+  <td colspan="2"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">NOTIFY</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['n_name'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['n_address'].' ,</span><br/><span style="font-family:calibri;font-size:10;"> TCroatia VAT: 65657961246</span><br/> <span style="font-family:calibri;font-size:10;"> '.isset($response['job']['n_address2']).' '.isset($response['job']['n_city']).'</span></td>
+  <td colspan="2"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">DELIVERY AGENT</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['delivery_agent'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['delivery_agent'].'</span><br/> <span style="font-family:calibri;font-size:10;"> Tel: '.$response['job']['delivery_agent'].'</span></td>
+ </tr>
+ <tr>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Place of Receipt
+ AGENT</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['receipt'].' </span></td>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Port of Loading</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['loading'].' </span></td>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Ocean Vessel / Voy No.</span><br/> <span style="font-family:calibri;font-size:9;"> '.isset($response['job']['vessel_name']).' '.isset($response['job']['voyage']).'</span></td>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Booking No</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['booking_no'].'</span></td>
+ </tr>
+  <tr>
+  	<td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Port of Discharge </span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['discharge'].' </span></td>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Place of Delivery</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['delivery'].' </span></td>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Total Gross Weight</span><br/> '.$response['job']['gross_weight'].'<span style="font-family:calibri;font-size:9;"> </span></td>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Total No of Container</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['no_containers'].'</span></td>
+ </tr>
+  <tr>
+  <td colspan="4" align="center" style="font-family:calibri-bold;color:rgb(0,112,192);font-size:8;">PARTICULARS FURNISHED BY SHIPPER</td>
+ </tr>
+  <tr>
+  <td align="center" style="border-right-color:white"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Container No.(s)</span><br/><br/><br/> <span style="font-family:calibri;font-size:10;"> AS PER LIST BELOW.</span></td>
+  <td align="center" style="border-right-color:white"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Marks and numbers</span></td>
+  <td align="center" style="border-right-color:white"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Number of packages, kinds of packages, general
+description of goods. (said to contain)</span><br/> <span style="font-family:calibri;font-size:10;"> 03X20 FT CONTAINER. SAID TO CONTAIN.
+SHIPPERS LOAD , STOW AND COUNT.
+2766 BOXES PACKED IN 63 PALLETS
+GLAZED VITRIFIED TILES
+S/B No. : 8260216 dt: 04-03-2023
+Invoice No. : EX22230728 DT: 04.03.2023
+NET WEIGHT : 78229.000
+Gross Weight: 79367.000	
+HSN CODE: 69072100</span></td>
+  <td align="center" style="border-left-color:white"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Gross Weight / Measurement</span><br/><br/><br/> <span style="font-family:calibri;font-size:10;"> 79367.00 KGS</span></td>
+ </tr>
+ <tr>
+ <td colspan="4">
+ <table border="1">
+ 
+  <tr style="background-color:yellow;">
+  <td align="center"><span style="font-family:calibri;font-size:10;">CONTAINER NO</span></td>
+  <td align="center"><span style="font-family:calibri;font-size:10;">LINE SEAL NO</span></td>
+  <td align="center"><span style="font-family:calibri;font-size:10;">SHIPPER SEAL</span></td>
+  <td align="center"><span style="font-family:calibri;font-size:10;">PACKAGE</span></td>
+  <td align="center"><span style="font-family:calibri;font-size:10;">TYPE</span></td>
+  <td align="center"><span style="font-family:calibri;font-size:10;">NET WEIGHT</span></td>
+  <td align="center"><span style="font-family:calibri;font-size:10;">Gross Weight</span></td>
+ </tr>
+<tr>
+  <td>3-1</td>
+  <td>3-2</td>
+  <td>3-3</td>
+  <td>3-3</td>
+  <td>3-3</td>
+  <td>3-3</td>
+  <td>3-3</td>
+ </tr>
+<tr>
+  <td colspan="3" align="center">Total</td>
+  <td align="center"></td>
+  <td align="center"></td>
+  <td align="center"></td>
+  <td align="center"></td>
+  <td align="center"></td>
+  <td align="center"></td>
+ </tr>
+ </table>
+ </td>  
+ </tr>
+ 
+ <tr>
+  <td colspan="4" align="right"><span style="font-family:calibri;font-size:10;line-height:10px;">SHIP ON BOARD <br/>'.$response['job']['date_issue'].' </span></td>
+ </tr>
+ <tr>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Freight & Charges Amount</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['charges_amount'].'</span></td>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Freight Payable at</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['payable_at'].'</span></td>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Number of Original MTD(s)</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['no_of_original'].'</span></td>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Place and Date of issue</span><br/> <span style="font-family:calibri;font-size:9;"> GANDHIDHAM - '.$response['job']['date_issue'].'</span></td>
+ </tr>
+ <tr>
+  <td colspan="2"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Other Particulars (if any)</span></td>
+  <td colspan="2"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">For TRANISO LOGISTICS</span><br/><br/><br/><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Authorised Signatory</span><br/><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">As An Agent(s)</span></td>
+ </tr>
+ <tr>
+  <td colspan="4" align="center"><span style="font-family:calibri;font-size:8;line-height:12px;">One of the MTD(s) must be surrendered, duly endorsed in exchange for the goods. In witness where of the original MTD all of this tenure and date have been signed in the
+number indicated below one of which being accomplished the other(s) to be void. - (TERMS CONTINUED ON BACK HEREOF)
+</span></td>
+ </tr>
+</table>
+			</body>
+			</html>';
+			$pdf->writeHTML($html, true, 0, true, 0);
+			/*$this->load->model('export_print');
+
+			$this->export_print->$page($pdf, $data, $letterhead = null);*/
+
+			$pdf->Output("$filename.pdf", 'I');
+        }
+   		
    }
 }
 

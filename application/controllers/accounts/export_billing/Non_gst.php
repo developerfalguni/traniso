@@ -82,7 +82,7 @@ class Non_gst extends MY_Controller {
 
 		header('Content-type: application/json; charset=utf-8');
 		echo json_encode($response, JSON_UNESCAPED_UNICODE);
-		
+
 	}
 
 	function getPendingJobsItems($job_id) {
@@ -148,8 +148,6 @@ class Non_gst extends MY_Controller {
 			$response['success'] = true;
 			$response['rows'] = $rows;
 			$response['job'] = $job;
-
-
 		}
 		else
 		{
