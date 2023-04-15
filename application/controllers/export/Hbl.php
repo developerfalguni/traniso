@@ -358,8 +358,10 @@ class Hbl extends MY_Controller {
 				$jobs['s_name'] 		= isset($shipper['name']) ? $shipper['name'] : '';
 				$jobs['s_address'] 		= isset($shipper['address']) ? $shipper['address'] : '';
 				$jobs['city_id'] 		= isset($shipper['city_id']) ? $shipper['city_id'] : '';
-				$jobs['state'] 		= isset($re_state->name) ? $re_state : '';
-				$jobs['country'] 		= isset($re_country->name) ? $re_country : '';
+				$jobs['state_name'] 		= $re_state->name;
+				$jobs['country_name'] 		= $re_country->name;
+				/*$jobs['state_name'] 		= isset($re_state->name) ? $re_state : '';*/
+				/*$jobs['country_name'] 		= isset($re_country->name) ? $re_country : '';*/
 				$jobs['pincode'] 		= $shipper['pincode'];
 				$jobs['email'] 		= isset($shipper['email']) ? $shipper['email'] : '' ;
 				$jobs['gst_nos'] 		= $shipper['gst_nos'];
@@ -403,7 +405,7 @@ class Hbl extends MY_Controller {
 				$jobs['remarks'] 		= $job['remarks'];
 
 				$containers = $this->kaabar->getRows('containers', $job_id, 'job_id');
-
+				
 				foreach ($containers as $key => $value) {
 
 					$containers[$key]['description'] = $jobs['remarks'];
@@ -417,10 +419,28 @@ class Hbl extends MY_Controller {
 			$response['containers'] = $containers;
 			$response['containers_cn'] = $containers;
 
-		
+
+		//print_r($response['containers_cn']);exit();
 		/*echo $response['job']['s_name'];
-   		echo $job_id;exit();
-*/
+   		echo $job_id;exit();*/
+
+   		/*pdf all Data*/
+   		/*shipper*/
+   		$pdf_sname=isset($response['job']['s_name']) ? $response['job']['s_name'] : '';
+   		$pdf_saddress=isset($response['job']['s_address']) ? $response['job']['s_address'] : '';
+   		$pdf_state_name=isset($response['job']['state_name']) ? $response['job']['state_name'] : '';
+   		$pdf_pincode=isset($response['job']['pincode']) ? $response['job']['pincode'] : '';
+   		$pdf_country_name=isset($response['job']['country_name']) ? $response['job']['country_name'] : '';
+   		$pdf_email=isset($response['job']['email']) ? $response['job']['email'] : '';
+   		$pdf_gst_nos=isset($response['job']['gst_nos']) ? $response['job']['gst_nos'] : '';
+   		$pdf_c_address1=isset($response['job']['c_address1']) ? $response['job']['c_address1'] : '';
+   		$pdf_c_address2=isset($response['job']['c_address2']) ? $response['job']['c_address2'] : '';
+   		$pdf_city=isset($response['job']['city']) ? $response['job']['city'] : '';
+   		$pdf_n_address2=isset($response['job']['n_address2']) ? $response['job']['n_address2'] : '';
+   		$pdf_n_city=isset($response['job']['n_city']) ? $response['job']['n_city'] : '';
+   		$pdf_vessel_name=isset($response['job']['vessel_name']) ? $response['job']['vessel_name'] : '';
+   		$pdf_voyage=isset($response['job']['voyage']) ? $response['job']['voyage'] : '';
+   		
    		}
 
    		$filename = "hbl_report";
@@ -458,8 +478,8 @@ class Hbl extends MY_Controller {
   <th colspan="4" align="center" style="font-family:calibri;font-size:8;line-height: 220%;">BILL OF LADING FOR OCEAN TRANSPORT OR MULTIMODAL TRANSPORT</th>
  </tr>
  <tr>
-  <td colspan="2" rowspan="3"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">SHIPPER</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['s_name'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['s_address'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.isset($response['job']['state']).' '.isset($response['job']['pincode']).' '.isset($response['job']['country']).'</span><br/><span style="font-family:calibri;font-size:10;"> TEL : 9727777791 MAIL : '.isset($response['job']['email']).'</span><br/><span style="font-family:calibri;font-size:10;"> GST NO : '.isset($response['job']['gst_nos']).'</span>
-	  <hr style="border: 1px solid black;line-height: 20px;"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">CONSIGNEE</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['c_name'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.isset($response['job']['c_address1']).' '.isset($response['job']['c_address2']).'</span><br/><span style="font-family:calibri;font-size:10;"> Croatia VAT: 65657961246</span><br/> <span style="font-family:calibri;font-size:10;"> '.isset($response['job']['c_address2']).' '.isset($response['job']['city']).'</span>	
+  <td colspan="2" rowspan="3"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">SHIPPER</span><br/><span style="font-family:calibri;font-size:10;"> '.$pdf_sname.'</span><br/><span style="font-family:calibri;font-size:10;"> '.$pdf_saddress.'</span><br/><span style="font-family:calibri;font-size:10;"> '.$pdf_state_name.' '.$pdf_pincode.' '.$pdf_country_name.'</span><br/><span style="font-family:calibri;font-size:10;"> TEL : 9727777791 MAIL : '.$pdf_email.'</span><br/><span style="font-family:calibri;font-size:10;"> GST NO : '.$pdf_gst_nos.'</span>
+	  <hr style="border: 1px solid black;line-height: 20px;"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">CONSIGNEE</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['c_name'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.$pdf_c_address1.' '.$pdf_c_address2.'</span><br/><span style="font-family:calibri;font-size:10;"> Croatia VAT: 65657961246</span><br/> <span style="font-family:calibri;font-size:10;"> '.$pdf_c_address2.' '.$pdf_city.'</span>	
 </td>
 <td align="center">
 <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:11;line-height: 250%;">BL NO \ MTD NO</span></td>
@@ -474,14 +494,14 @@ class Hbl extends MY_Controller {
   <td colspan="2" align="center"><img src="/traniso/php_uploads/bd0f7b72c8788826c4c1b136c99f57fd.png" width="100" height="60"><br/><span style="font-family:calibri;font-size:8;">REG OFF. : GF2, Ground Floor, Riddhi Siddhi Arcade 1, Plot No 13,<br style="line-height:12px;">Sector 8, Nr B.M Pump, Gandhidham - Gujarat (370201) - <b>INDIA</b><br style="line-height:12px;"><a href="www.traniso.in" style="color:black;text-decoration:none">www.traniso.in</a> | +91 9727 626474 | <a href="mailto:manish@traniso.in" style="color:black;text-decoration:none">manish@traniso.in</a><br style="line-height:12px;"><b>REG NO : MTO/DGS/2553/JAN/2025</b></span></td>  
  </tr>
  <tr>
-  <td colspan="2"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">NOTIFY</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['n_name'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['n_address'].' ,</span><br/><span style="font-family:calibri;font-size:10;"> TCroatia VAT: 65657961246</span><br/> <span style="font-family:calibri;font-size:10;"> '.isset($response['job']['n_address2']).' '.isset($response['job']['n_city']).'</span></td>
+  <td colspan="2"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">NOTIFY</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['n_name'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['n_address'].' ,</span><br/><span style="font-family:calibri;font-size:10;"> TCroatia VAT: 65657961246</span><br/> <span style="font-family:calibri;font-size:10;"> '.$pdf_n_address2.' '.$pdf_n_city.'</span></td>
   <td colspan="2"> <span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:12;">DELIVERY AGENT</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['delivery_agent'].'</span><br/><span style="font-family:calibri;font-size:10;"> '.$response['job']['delivery_agent'].'</span><br/> <span style="font-family:calibri;font-size:10;"> Tel: '.$response['job']['delivery_agent'].'</span></td>
  </tr>
  <tr>
   <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Place of Receipt
  AGENT</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['receipt'].' </span></td>
   <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Port of Loading</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['loading'].' </span></td>
-  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Ocean Vessel / Voy No.</span><br/> <span style="font-family:calibri;font-size:9;"> '.isset($response['job']['vessel_name']).' '.isset($response['job']['voyage']).'</span></td>
+  <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Ocean Vessel / Voy No.</span><br/> <span style="font-family:calibri;font-size:9;"> '.$pdf_vessel_name.' '.$pdf_voyage.'</span></td>
   <td align="center"><span style="font-family:calibri-bold;color:rgb(0,112,192);font-size:10;">Booking No</span><br/> <span style="font-family:calibri;font-size:9;"> '.$response['job']['booking_no'].'</span></td>
  </tr>
   <tr>
@@ -520,24 +540,36 @@ HSN CODE: 69072100</span></td>
   <td align="center"><span style="font-family:calibri;font-size:10;">TYPE</span></td>
   <td align="center"><span style="font-family:calibri;font-size:10;">NET WEIGHT</span></td>
   <td align="center"><span style="font-family:calibri;font-size:10;">Gross Weight</span></td>
- </tr>
-<tr>
-  <td>3-1</td>
-  <td>3-2</td>
-  <td>3-3</td>
-  <td>3-3</td>
-  <td>3-3</td>
-  <td>3-3</td>
-  <td>3-3</td>
- </tr>
+ </tr>';
+ $sum_package = 0;
+ $sum_net_weight = 0;
+ $sum_gross_weight = 0;
+ foreach ($response['containers_cn'] as $key => $value) {
+/*print_r($value);*/
+
+$sum_package += $value[$key] = $value['cntr_packages'];
+$sum_net_weight += $value[$key] = $value['cntr_net_weight'];
+$sum_gross_weight += $value[$key] = $value['cntr_gross_weight'];
+
+$html .= '<tr>
+  <td align="center">'.$value[$key] = $value['number'].'</td>
+  <td align="center">'.$value[$key] = $value['line_seal'].'</td>
+  <td align="center">'.$value[$key] = $value['shipper_seal'].'</td>
+  <td align="center">'.$value[$key] = $value['cntr_packages'].'</td>
+  <td align="center">'.$value[$key] = $value['container_type'].'</td>
+  <td align="center">'.$value[$key] = $value['cntr_net_weight'].'</td>
+  <td align="center">'.$value[$key] = $value['cntr_gross_weight'].'</td>
+ </tr>';
+
+}
+$html .= '
 <tr>
   <td colspan="3" align="center">Total</td>
+  <td align="center">'.$sum_package.'</td>
   <td align="center"></td>
-  <td align="center"></td>
-  <td align="center"></td>
-  <td align="center"></td>
-  <td align="center"></td>
-  <td align="center"></td>
+  <td align="center">'.$sum_net_weight.'</td>
+  <td align="center">'.$sum_gross_weight.'</td>
+
  </tr>
  </table>
  </td>  
